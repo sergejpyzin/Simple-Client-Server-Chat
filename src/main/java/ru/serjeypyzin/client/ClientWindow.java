@@ -5,13 +5,13 @@ import java.awt.*;
 
 public class ClientWindow extends JFrame {
 
-    private final static int WINDOW_WIDTH = 400;
-    private final static int WINDOW_HEIGHT = 400;
+    private final static int CLIENT_WINDOW_WIDTH = 400;
+    private final static int CLIENT_WINDOW_HEIGHT = 400;
 
     SettingClientWindow settingClientWindow = new SettingClientWindow();
     public ClientWindow() {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        setSize(CLIENT_WINDOW_WIDTH, CLIENT_WINDOW_HEIGHT);
         setLocationRelativeTo(null);
 
         setTitle("Client");
