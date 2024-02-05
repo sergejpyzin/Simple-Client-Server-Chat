@@ -1,35 +1,42 @@
 package ru.serjeypyzin.server;
 
+import ru.serjeypyzin.client.ClientGUI;
+
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ServerGUI extends JFrame {
     private final static int SERVER_WINDOW_WIDTH = 400;
     private final static int SERVER_WINDOW_HEIGHT = 400;
 
-    private JTextArea infoArea;
+    private final static String RELATIVE_PATH = "src\\main\\java\\ru\\serjeypyzin\\server\\log_file.txt";
 
-    public ServerGUI () {
+    List<ClientGUI> clients = new ArrayList<>();
+    private JTextArea infoArea;
+    private boolean isRunning;
+
+    public ServerGUI() {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(SERVER_WINDOW_WIDTH, SERVER_WINDOW_HEIGHT);
         setLocationRelativeTo(null);
         setResizable(false);
-
         setTitle("SERVER");
 
         add(getButtonMenu(), BorderLayout.SOUTH);
-        infoArea = getInfoArea();
-        add(infoArea);
+        add(getInfoArea());
 
         setVisible(true);
-
-
     }
 
     private JPanel getButtonMenu() {
@@ -40,11 +47,31 @@ public class ServerGUI extends JFrame {
         buttonPanel.add(buttonStart);
         buttonPanel.add(buttonStop);
 
+        buttonStart.addActionListener(e -> {
+            if (isRunning) {
+                addedLogInfo("Сервер работает!");
+            } else {
+                isRunning = true;
+                addedLogInfo("Старт работы сервера!");
+            }
+
+        });
+
+        buttonStop.addActionListener(e -> {
+            if (!isRunning) {
+                addedLogInfo("Сервер остановлен!");
+            } else {
+                isRunning = false;
+                addedLogInfo("Остановка сервера");
+            }
+
+        });
+
         return buttonPanel;
     }
 
-    private JTextArea getInfoArea () {
-        JTextArea infoArea = new JTextArea();
+    private JTextArea getInfoArea() {
+        infoArea = new JTextArea();
         infoArea.setEditable(false);
 
         JScrollPane jScrollPane = new JScrollPane(infoArea);
@@ -53,26 +80,70 @@ public class ServerGUI extends JFrame {
         return infoArea;
     }
 
-    private void startServer() {
-        // Здесь вы можете запустить серверный код
-        // Например, создать ServerSocket и начать принимать подключения от клиентов
-        // При получении сообщения от клиента, вызывайте метод saveMessageToFile(message)
+    public boolean connectClient(ClientGUI client) {
+        if (!isRunning) {
+            return false;
+        }
+        clients.add(client);
+        return true;
     }
 
-    private void stopServer() {
-        // Здесь вы можете остановить серверный код
+    public void disconnectClient(ClientGUI client) {
+        clients.remove(client);
+        if (client != null) {
+            client.disconnectFromServer();
+        }
     }
 
-    private void saveMessageToFile(String message) {
-        // Сохраняем сообщение в файл
-        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("server_log.txt", true)))) {
-            String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-            writer.println(timestamp + ": " + message);
+    public void sendMessage(String message) {
+        if (!isRunning) {
+            return;
+        }
+        message += "";
+        addedLogInfo(message);
+        answerAllClient(message);
+        saveInfoToLog(message);
+    }
+
+    public void answerAllClient(String message) {
+        clients.forEach(client -> client.answerClient(message));
+    }
+
+    public void addedLogInfo(String info) {
+        infoArea.append(info + System.lineSeparator());
+    }
+
+    private void saveInfoToLog(String text) {
+        try {
+            Path logFilePath = Paths.get(RELATIVE_PATH);
+
+            if (!Files.exists(logFilePath)) {
+                Files.createFile(logFilePath);
+            }
+
+            try (FileWriter writer = new FileWriter(RELATIVE_PATH, true)) {
+                writer.write(text + System.lineSeparator());
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Ошибка при записи в лог: " + e.getMessage());
         }
 
-        // Отображаем сообщение в JTextArea
-        infoArea.append(message + "\n");
     }
+
+    private String readInfoFromLog() {
+        try {
+            return Files.lines(Paths.get(RELATIVE_PATH))
+                    .collect(Collectors.joining(System.lineSeparator()));
+        } catch (IOException e) {
+            System.err.println("Ошибка при чтении лога: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public String getInfoFromLog() {
+        return readInfoFromLog();
+    }
+
+
 }
+

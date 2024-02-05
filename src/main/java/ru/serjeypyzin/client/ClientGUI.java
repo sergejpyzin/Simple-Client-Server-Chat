@@ -1,69 +1,89 @@
 package ru.serjeypyzin.client;
 
+import ru.serjeypyzin.server.ServerGUI;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ClientGUI extends JFrame {
     private final static int CLIENT_WINDOW_WIDTH = 400;
     private final static int CLIENT_WINDOW_HEIGHT = 400;
-public ClientGUI (){
-    setDefaultCloseOperation(EXIT_ON_CLOSE);
-    setSize(CLIENT_WINDOW_WIDTH, CLIENT_WINDOW_HEIGHT);
-    setLocationRelativeTo(null);
+    private boolean isConnected;
+    private String userName;
+    private JPanel titlePanel;
+    private JTextField ipClient, portClient, clientName, inputField;
+    private JPasswordField password;
+    private JButton buttonLogin;
+    private JTextArea messageArea;
+    private String message;
+    private ServerGUI serverGUI;
 
-    setTitle("Client");
-    setResizable(true);
+    public ClientGUI(ServerGUI serverGUI) {
+        this.serverGUI = serverGUI;
 
-    add(getTitlePanel(), BorderLayout.NORTH);
-    add(getSendPanel(), BorderLayout.SOUTH);
-    add(getMessageArea(), BorderLayout.CENTER);
+        setSize(CLIENT_WINDOW_WIDTH, CLIENT_WINDOW_HEIGHT);
+        setLocationRelativeTo(null);
+
+        setTitle("Client");
+        setResizable(true);
+
+        add(getTitlePanel(), BorderLayout.NORTH);
+        add(getSendPanel(), BorderLayout.SOUTH);
+        add(getMessageArea(), BorderLayout.CENTER);
 
 
-    setVisible(true);
-}
+        setVisible(true);
+    }
 
-    JPanel getIpSettingPanel() {
+    private JPanel getIpSettingPanel() {
         JPanel jPanel = new JPanel(new GridLayout(1, 3));
 
-        JTextField ipClient = new JTextField("127.0.0.1");
-        JTextField portClient = new JTextField("8080");
+        ipClient = new JTextField("127.0.0.1");
+        portClient = new JTextField("8080");
 
         jPanel.add(ipClient);
         jPanel.add(portClient);
 
         return jPanel;
     }
-    JPanel getLoginPanel() {
+
+    private JPanel getLoginPanel() {
         JPanel loginPanel = new JPanel(new GridLayout(1, 3));
 
-        JTextField clientName = new JTextField("Ivan Ivanovich");
-        JPasswordField password = new JPasswordField("123456789");
+        clientName = new JTextField("Ivan Ivanovich");
+        password = new JPasswordField("123456789");
 
-        JButton buttonLogin = new JButton("LOGIN");
+        buttonLogin = new JButton("LOGIN");
 
         loginPanel.add(clientName);
         loginPanel.add(password);
         loginPanel.add(buttonLogin);
 
+        buttonLogin.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                connectToServer();
+            }
+        });
+
         return loginPanel;
     }
 
-    JPanel getTitlePanel (){
-        JPanel jPanel = new JPanel(new GridLayout(2, 1));
+    private JPanel getTitlePanel() {
+        JPanel titlePanel = new JPanel(new GridLayout(2, 1));
 
-        jPanel.add(getIpSettingPanel());
-        jPanel.add(getLoginPanel());
+        titlePanel.add(getIpSettingPanel());
+        titlePanel.add(getLoginPanel());
 
-        return jPanel;
+        return titlePanel;
     }
 
 
-
-    JTextArea getMessageArea() {
-
-        JTextArea messageArea = new JTextArea();
+    private JTextArea getMessageArea() {
+        messageArea = new JTextArea();
         messageArea.setEditable(false);
 
         JScrollPane jScrollPane = new JScrollPane(messageArea);
@@ -73,14 +93,14 @@ public ClientGUI (){
     }
 
 
-    JPanel getSendPanel() {
+    private JPanel getSendPanel() {
         JPanel sendPanel = new JPanel(new BorderLayout());
-        JTextField inputField = new JTextField();
+        inputField = new JTextField();
         inputField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    sendMessage(inputField.getText());
+                    createMessage();
                     inputField.setText("");
                 }
             }
@@ -88,8 +108,8 @@ public ClientGUI (){
 
         JButton sendButton = new JButton("Send");
         sendButton.addActionListener(e -> {
-            String inputMessage = inputField.getText();
-            System.out.printf(inputMessage);
+            createMessage();
+            inputField.setText("");
         });
 
         sendPanel.add(inputField);
@@ -98,9 +118,74 @@ public ClientGUI (){
         return sendPanel;
     }
 
-    private void sendMessage(String text) {
-
-
+    private void sendMessage(String message) {
+        if (isConnected) {
+            serverGUI.sendMessage(userName + ": " + message);
+        } else {
+            addedInfoToLog("Нет подключения к серверу");
+        }
     }
 
+
+
+    private void connectToServer() {
+        if (serverGUI.connectClient(this)){
+            addedInfoToLog("Вы успешно подключились!\n");
+            isConnected = true;
+            userName = clientName.getText();
+            String logInfo = serverGUI.getInfoFromLog();
+            if (logInfo != null){
+                addedInfoToLog(logInfo);
+            }
+        } else {
+            addedInfoToLog("Подключение не удалось");
+        }
+    }
+
+    public void disconnectFromServer() {
+        if (isConnected) {
+            isConnected = false;
+            serverGUI.disconnectClient(this);
+            addedInfoToLog("Вы были отключены от сервера!");
+        }
+    }
+
+    public void createMessage() {
+        if (!isConnected) {
+            addedInfoToLog("Нет подключения к серверу");
+            return;
+        }
+        String text = inputField.getText();
+        if (!text.isEmpty()) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+            serverGUI.sendMessage("[" + dateFormat.format(new Date()) + "] " + userName + ": " + text);
+            messageArea.setText(inputField.getText());
+        } else {
+            addedInfoToLog("Сообщение не может быть пустым");
+        }
+    }
+
+    public void answerClient(String text){
+        addedInfoToLog(text);
+    }
+
+    public void addedInfoToLog(String text) {
+        messageArea.append(text + System.lineSeparator());
+    }
+
+    @Override
+    protected void processWindowEvent(WindowEvent e) {
+        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+            disconnectFromServer();
+            dispose();
+        }
+        super.processWindowEvent(e);
+    }
+
+    public void dispose(){
+        super.dispose();
+    }
+
+
 }
+
