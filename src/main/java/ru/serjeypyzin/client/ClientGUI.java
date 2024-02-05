@@ -74,18 +74,8 @@ public ClientGUI (){
 
 
     JPanel getSendPanel() {
-        JPanel sendPanel = new JPanel(new GridLayout(1, 3));
+        JPanel sendPanel = new JPanel(new BorderLayout());
         JTextField inputField = new JTextField();
-        JButton sendButton = new JButton("Send");
-
-        sendPanel.add(inputField);
-        sendPanel.add(sendButton);
-
-        sendButton.addActionListener(e -> {
-            String inputMessage = inputField.getText();
-            System.out.printf(inputMessage);
-        });
-
         inputField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -95,6 +85,16 @@ public ClientGUI (){
                 }
             }
         });
+
+        JButton sendButton = new JButton("Send");
+        sendButton.addActionListener(e -> {
+            String inputMessage = inputField.getText();
+            System.out.printf(inputMessage);
+        });
+
+        sendPanel.add(inputField);
+        sendPanel.add(sendButton, BorderLayout.EAST);
+
         return sendPanel;
     }
 
