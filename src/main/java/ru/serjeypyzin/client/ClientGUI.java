@@ -14,11 +14,10 @@ public class ClientGUI extends JFrame {
     private static final int CLIENT_WINDOW_HEIGHT = 400;
     private boolean isConnected;
     private String userName;
-    private JTextField ipClient, portClient, clientName, inputField;
-    private JPasswordField password;
-    private JButton buttonLogin;
+    private JTextField clientName;
+    private JTextField inputField;
     private JTextArea messageArea;
-    private ServerGUI serverGUI;
+    private final ServerGUI serverGUI;
 
     public ClientGUI(ServerGUI serverGUI) {
         this.serverGUI = serverGUI;
@@ -37,8 +36,8 @@ public class ClientGUI extends JFrame {
 
     private JPanel getIpSettingPanel() {
         JPanel jPanel = new JPanel(new GridLayout(1, 3));
-        ipClient = new JTextField("127.0.0.1");
-        portClient = new JTextField("8080");
+        JTextField ipClient = new JTextField("127.0.0.1");
+        JTextField portClient = new JTextField("8080");
 
         jPanel.add(ipClient);
         jPanel.add(portClient);
@@ -48,9 +47,9 @@ public class ClientGUI extends JFrame {
     private JPanel getLoginPanel() {
         JPanel loginPanel = new JPanel(new GridLayout(1, 3));
         clientName = new JTextField("Ivan Ivanovich");
-        password = new JPasswordField("123456789");
+        JPasswordField password = new JPasswordField("123456789");
 
-        buttonLogin = new JButton("LOGIN");
+        JButton buttonLogin = new JButton("LOGIN");
         loginPanel.add(clientName);
         loginPanel.add(password);
         loginPanel.add(buttonLogin);
@@ -97,14 +96,6 @@ public class ClientGUI extends JFrame {
         sendPanel.add(inputField);
         sendPanel.add(sendButton, BorderLayout.EAST);
         return sendPanel;
-    }
-
-    private void sendMessage(String message) {
-        if (isConnected) {
-            serverGUI.sendMessage(userName + ": " + message);
-        } else {
-            addedInfoToLog("Нет подключения к серверу");
-        }
     }
 
     private void connectToServer() {
