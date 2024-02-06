@@ -1,3 +1,4 @@
+// ClientGUI.java
 package ru.serjeypyzin.client;
 
 import ru.serjeypyzin.server.ServerGUI;
@@ -9,16 +10,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ClientGUI extends JFrame {
-    private final static int CLIENT_WINDOW_WIDTH = 400;
-    private final static int CLIENT_WINDOW_HEIGHT = 400;
+    private static final int CLIENT_WINDOW_WIDTH = 400;
+    private static final int CLIENT_WINDOW_HEIGHT = 400;
     private boolean isConnected;
     private String userName;
-    private JPanel titlePanel;
     private JTextField ipClient, portClient, clientName, inputField;
     private JPasswordField password;
     private JButton buttonLogin;
     private JTextArea messageArea;
-    private String message;
     private ServerGUI serverGUI;
 
     public ClientGUI(ServerGUI serverGUI) {
@@ -26,7 +25,6 @@ public class ClientGUI extends JFrame {
 
         setSize(CLIENT_WINDOW_WIDTH, CLIENT_WINDOW_HEIGHT);
         setLocationRelativeTo(null);
-
         setTitle("Client");
         setResizable(true);
 
@@ -34,53 +32,39 @@ public class ClientGUI extends JFrame {
         add(getSendPanel(), BorderLayout.SOUTH);
         add(getMessageArea(), BorderLayout.CENTER);
 
-
         setVisible(true);
     }
 
     private JPanel getIpSettingPanel() {
         JPanel jPanel = new JPanel(new GridLayout(1, 3));
-
         ipClient = new JTextField("127.0.0.1");
         portClient = new JTextField("8080");
 
         jPanel.add(ipClient);
         jPanel.add(portClient);
-
         return jPanel;
     }
 
     private JPanel getLoginPanel() {
         JPanel loginPanel = new JPanel(new GridLayout(1, 3));
-
         clientName = new JTextField("Ivan Ivanovich");
         password = new JPasswordField("123456789");
 
         buttonLogin = new JButton("LOGIN");
-
         loginPanel.add(clientName);
         loginPanel.add(password);
         loginPanel.add(buttonLogin);
 
-        buttonLogin.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                connectToServer();
-            }
-        });
-
+        buttonLogin.addActionListener(e -> connectToServer());
         return loginPanel;
     }
 
     private JPanel getTitlePanel() {
         JPanel titlePanel = new JPanel(new GridLayout(2, 1));
-
         titlePanel.add(getIpSettingPanel());
         titlePanel.add(getLoginPanel());
-
         return titlePanel;
     }
-
 
     private JTextArea getMessageArea() {
         messageArea = new JTextArea();
@@ -88,10 +72,8 @@ public class ClientGUI extends JFrame {
 
         JScrollPane jScrollPane = new JScrollPane(messageArea);
         add(jScrollPane);
-
         return messageArea;
     }
-
 
     private JPanel getSendPanel() {
         JPanel sendPanel = new JPanel(new BorderLayout());
@@ -114,7 +96,6 @@ public class ClientGUI extends JFrame {
 
         sendPanel.add(inputField);
         sendPanel.add(sendButton, BorderLayout.EAST);
-
         return sendPanel;
     }
 
@@ -125,8 +106,6 @@ public class ClientGUI extends JFrame {
             addedInfoToLog("Нет подключения к серверу");
         }
     }
-
-
 
     private void connectToServer() {
         if (serverGUI.connectClient(this)){
@@ -185,7 +164,4 @@ public class ClientGUI extends JFrame {
     public void dispose(){
         super.dispose();
     }
-
-
 }
-

@@ -10,6 +10,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -121,24 +122,25 @@ public class ServerGUI extends JFrame {
                 Files.createFile(logFilePath);
             }
 
-            try (FileWriter writer = new FileWriter(RELATIVE_PATH, true)) {
-                writer.write(text + System.lineSeparator());
+            try (BufferedWriter writer = Files.newBufferedWriter(logFilePath, StandardOpenOption.APPEND)) {
+                writer.write(text + System.getProperty("line.separator"));
             }
         } catch (IOException e) {
             System.err.println("Ошибка при записи в лог: " + e.getMessage());
         }
-
     }
+
 
     private String readInfoFromLog() {
         try {
             return Files.lines(Paths.get(RELATIVE_PATH))
-                    .collect(Collectors.joining(System.lineSeparator()));
+                    .collect(Collectors.joining(System.getProperty("line.separator")));
         } catch (IOException e) {
             System.err.println("Ошибка при чтении лога: " + e.getMessage());
             return null;
         }
     }
+
 
     public String getInfoFromLog() {
         return readInfoFromLog();
