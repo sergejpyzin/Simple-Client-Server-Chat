@@ -1,6 +1,9 @@
 package ru.serjeypyzin.server;
 
-import ru.serjeypyzin.client.ClientGUI;
+import ru.serjeypyzin.client.Client;
+import ru.serjeypyzin.client.ClientView;
+import ru.serjeypyzin.repository.MessageRepository;
+import ru.serjeypyzin.repository.MessageRepositoryImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,17 +15,17 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class ServerGUI extends JFrame {
+public class ServerGUI extends JFrame implements ServerView {
     private final static int SERVER_WINDOW_WIDTH = 400;
     private final static int SERVER_WINDOW_HEIGHT = 400;
 
-    private final static String RELATIVE_PATH = "src\\main\\java\\ru\\serjeypyzin\\server\\log_file.txt";
+    private final static String RELATIVE_PATH = "src/main/java/ru/serjeypyzin/server/log_file.txt";
 
-    List<ClientGUI> clients = new ArrayList<>();
+    private final List<ClientView> clients = new ArrayList<>();
     private JTextArea infoArea;
     private boolean isRunning;
+    private final MessageRepository messageRepository;
 
     public ServerGUI() {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -30,6 +33,8 @@ public class ServerGUI extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("SERVER");
+
+        messageRepository = new MessageRepositoryImpl();
 
         add(getButtonMenu(), BorderLayout.SOUTH);
         add(getInfoArea());
@@ -78,7 +83,8 @@ public class ServerGUI extends JFrame {
         return infoArea;
     }
 
-    public boolean connectClient(ClientGUI client) {
+    @Override
+    public boolean connectClient(Client client) {
         if (!isRunning) {
             return false;
         }
@@ -86,13 +92,15 @@ public class ServerGUI extends JFrame {
         return true;
     }
 
-    public void disconnectClient(ClientGUI client) {
+    @Override
+    public void disconnectClient(Client client) {
         clients.remove(client);
         if (client != null) {
-            client.disconnectFromServer();
+            client.appendMessage("Вы были отключены от сервера!");
         }
     }
 
+    @Override
     public void sendMessage(String message) {
         if (!isRunning) {
             return;
@@ -101,13 +109,14 @@ public class ServerGUI extends JFrame {
         addedLogInfo(message);
         answerAllClient(message);
         saveInfoToLog(message);
+        messageRepository.saveMessage(message);
     }
 
-    public void answerAllClient(String message) {
-        clients.forEach(client -> client.answerClient(message));
+    private void answerAllClient(String message) {
+        clients.forEach(client -> client.appendMessage(message));
     }
 
-    public void addedLogInfo(String info) {
+    private void addedLogInfo(String info) {
         infoArea.append(info + System.lineSeparator());
     }
 
@@ -127,22 +136,7 @@ public class ServerGUI extends JFrame {
         }
     }
 
-
-    private String readInfoFromLog() {
-        try {
-            return Files.lines(Paths.get(RELATIVE_PATH))
-                    .collect(Collectors.joining(System.getProperty("line.separator")));
-        } catch (IOException e) {
-            System.err.println("Ошибка при чтении лога: " + e.getMessage());
-            return null;
-        }
-    }
-
-
     public String getInfoFromLog() {
-        return readInfoFromLog();
+        return messageRepository.readInfoFromLog();
     }
-
-
 }
-
